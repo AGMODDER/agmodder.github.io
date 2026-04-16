@@ -3609,6 +3609,24 @@
         .subject-pane .main-content { margin-top: 64px !important; }
         .subject-pane .section:not(.flash-highlight) { animation: none !important; }
 
+        .subject-pane .math-display,
+        .subject-pane mjx-container[display="true"],
+        .subject-pane .MathJax_Display {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .subject-pane mjx-container[display="true"] {
+            display: block !important;
+            padding-bottom: 2px;
+        }
+
+        .subject-pane mjx-container[display="true"] > mjx-math {
+            min-width: max-content;
+        }
+
         .subject-pane:not(.active) .sidebar,
         .subject-pane:not(.active) .main-content {
             display: none !important;
@@ -6286,7 +6304,7 @@
                     <div class="exercise-title">Questão 1.1 — Nave Espacial e Velocidade da Luz</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>Uma nave espacial acelera a partir do repouso com aceleração de $10 \text{ m/s}^2$ numa linha reta. Quanto tempo, aproximadamente, leva para que a nave atinja a velocidade de 3,61% da velocidade da luz? Despreze efeitos relativísticos[cite: 261, 262].<br>
+                <p>Uma nave espacial acelera a partir do repouso com aceleração de $10 \text{ m/s}^2$ numa linha reta. Quanto tempo, aproximadamente, leva para que a nave atinja a velocidade de 3,61% da velocidade da luz? Despreze efeitos relativísticos.<br>
                 (a) 2 dias &nbsp;&nbsp; (b) 12,5 dias &nbsp;&nbsp; (c) $3,0\times 10^4 \text{ s}$ &nbsp;&nbsp; (d) $3,0\times 10^6 \text{ s}$ &nbsp;&nbsp; (e) 7,0 dias</p>
                 
                 <div class="practice-solution">
@@ -6319,7 +6337,7 @@
                     <div class="exercise-title">Questão 1.2 — Caminhada e Velocidade Escalar vs Vetorial</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>Partindo da porta de entrada, você percorre 60,0 m no sentido leste em 28,0 s até um moinho. Vira-se e percorre lentamente 40,0 m em sentido oeste em 36,0 s até um banco. Para o trecho total, quais são: (a) o vetor velocidade média; (b) a velocidade escalar média? [cite: 263, 264, 265, 266]</p>
+                <p>Partindo da porta de entrada, você percorre 60,0 m no sentido leste em 28,0 s até um moinho. Vira-se e percorre lentamente 40,0 m em sentido oeste em 36,0 s até um banco. Para o trecho total, quais são: (a) o vetor velocidade média; (b) a velocidade escalar média? </p>
                 
                 <div class="practice-solution">
                     <button class="reveal-btn" onclick="toggleSolution(this)">Ver Resolução Completa</button>
@@ -6356,7 +6374,7 @@
                     <div class="exercise-title">Questão 1.3 — A Chamada do Elevador</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>Em um prédio de 20 andares (além do térreo) o elevador leva 36 s para ir do térreo ao 20º andar. Uma pessoa em um dos andares chama o elevador, que está no térreo, e 39,6 s após a chamada a pessoa atinge o andar térreo. Sabendo que não houve paradas e que tempos de porta são desprezíveis, qual andar a pessoa estava? [cite: 266, 267, 268]<br>
+                <p>Em um prédio de 20 andares (além do térreo) o elevador leva 36 s para ir do térreo ao 20º andar. Uma pessoa em um dos andares chama o elevador, que está no térreo, e 39,6 s após a chamada a pessoa atinge o andar térreo. Sabendo que não houve paradas e que tempos de porta são desprezíveis, qual andar a pessoa estava? <br>
                 (a) 9º (b) 11º (c) 16º (d) 18º (e) 19º</p>
                 
                 <div class="practice-solution">
@@ -6391,9 +6409,9 @@
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
                 <p>Numa tarde de sábado a fila única dos clientes tem 50 m. As pessoas ficam separadas por 1 m, atendidas por três vendedores (caixas), cada um levando 3 min por cliente. Determine:<br>
-                (a) Qual a velocidade média dos clientes na fila? [cite: 271]<br>
-                (b) Quanto tempo cada cliente fica na fila? [cite: 271]<br>
-                (c) Se um dos caixas se retirar por 30 min, quantos metros aumentará a fila? [cite: 272]</p>
+                (a) Qual a velocidade média dos clientes na fila? <br>
+                (b) Quanto tempo cada cliente fica na fila? <br>
+                (c) Se um dos caixas se retirar por 30 min, quantos metros aumentará a fila? </p>
                 
                 <div class="practice-solution">
                     <button class="reveal-btn" onclick="toggleSolution(this)">Ver Resolução Completa</button>
@@ -6437,7 +6455,7 @@
                     <div class="exercise-title">Questão 1.5 — Avião e o Efeito Retardado do Som</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>Um avião voando horizontalmente a 4000 m de altura passou por um ponto A e depois por um ponto B situado a 3000 m de A. Um observador no solo, verticalmente abaixo de B, começou a ouvir o som do avião emitido em A, 3 s depois de ouvir o som proveniente de B. Sabendo que a velocidade do som no ar é de 320 m/s, qual a velocidade do avião? [cite: 273, 274]</p>
+                <p>Um avião voando horizontalmente a 4000 m de altura passou por um ponto A e depois por um ponto B situado a 3000 m de A. Um observador no solo, verticalmente abaixo de B, começou a ouvir o som do avião emitido em A, 3 s depois de ouvir o som proveniente de B. Sabendo que a velocidade do som no ar é de 320 m/s, qual a velocidade do avião? </p>
                 
                 <div class="practice-solution">
                     <button class="reveal-btn" onclick="toggleSolution(this)">Ver Resolução Completa</button>
@@ -6481,7 +6499,7 @@
                     <div class="exercise-title">Questão 1.6 — Sincronismo de Passadas</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>Um rapaz e uma moça caminham abraçados à velocidade de 1,2 m/s. Os passos do rapaz e da moça medem respectivamente 60 cm e 40 cm. (a) Qual a razão entre as frequências dos passos do rapaz e da moça? [cite: 275, 276, 277] (b) Se ambos iniciam levando o pé direito, após quanto tempo estarão colocando simultaneamente o pé esquerdo no chão? [cite: 278]</p>
+                <p>Um rapaz e uma moça caminham abraçados à velocidade de 1,2 m/s. Os passos do rapaz e da moça medem respectivamente 60 cm e 40 cm. (a) Qual a razão entre as frequências dos passos do rapaz e da moça?  (b) Se ambos iniciam levando o pé direito, após quanto tempo estarão colocando simultaneamente o pé esquerdo no chão? </p>
                 
                 <div class="practice-solution">
                     <button class="reveal-btn" onclick="toggleSolution(this)">Ver Resolução Completa</button>
@@ -6521,7 +6539,7 @@
                     <div class="exercise-title">Questão 1.7 — Sistema Planetário e Minuto-Luz</div>
                     <span class="exercise-badge cyan">Lista 1</span>
                 </div>
-                <p>O esquema de March of the planets[cite: 279, 280, 281]. Legenda: S-Sol, Me-Mercúrio, V-Vênus, T-Terra. (i) Calcule a distância, em metros, correspondente a 1 minuto-luz? (ii) Quais são, aprox., as distâncias Terra-Sol e Terra-Vênus em metros de acordo com o gráfico? [cite: 282, 283]</p>
+                <p>O esquema de March of the planets. Legenda: S-Sol, Me-Mercúrio, V-Vênus, T-Terra. (i) Calcule a distância, em metros, correspondente a 1 minuto-luz? (ii) Quais são, aprox., as distâncias Terra-Sol e Terra-Vênus em metros de acordo com o gráfico? </p>
                 
                 <div class="practice-solution">
                     <button class="reveal-btn" onclick="toggleSolution(this)">Ver Resolução Completa</button>
@@ -6570,7 +6588,7 @@
                     <div class="exercise-title">Questão 2.1 — Bolinhas Simultâneas (A Queda e o Lançamento)</div>
                     <span class="exercise-badge red">Lista 2</span>
                 </div>
-                <p>Uma bolinha de aço é abandonada de uma altura de 8 m. No mesmo instante, uma segunda é lançada verticalmente do solo. Ambas chegam ao chão simultaneamente. Utilize cálculo diferencial para determinar a altura máxima da segunda bolinha. [cite: 229, 230, 231]<br>
+                <p>Uma bolinha de aço é abandonada de uma altura de 8 m. No mesmo instante, uma segunda é lançada verticalmente do solo. Ambas chegam ao chão simultaneamente. Utilize cálculo diferencial para determinar a altura máxima da segunda bolinha. <br>
                 (a) 1 m; (b) 2 m; (c) 4 m; (d) 5 m; (e) 8 m;</p>
                 
                 <div class="practice-solution">
@@ -6608,7 +6626,7 @@
                     <div class="exercise-title">Questão 2.2 — O Objeto Solto do Balão</div>
                     <span class="exercise-badge red">Lista 2</span>
                 </div>
-                <p>Um balão está subindo com velocidade de $10 \text{ m/s}$ a $75 \text{ m}$ do solo quando um aparelho se solta dele. Utilize cálculo para determinar o tempo que o aparelho levará para chegar ao solo. Assuma $g=10\text{ m/s}^2$. [cite: 232, 233, 234]<br>
+                <p>Um balão está subindo com velocidade de $10 \text{ m/s}$ a $75 \text{ m}$ do solo quando um aparelho se solta dele. Utilize cálculo para determinar o tempo que o aparelho levará para chegar ao solo. Assuma $g=10\text{ m/s}^2$. <br>
                 (a) 2,0; (b) 3,0; (c) 4,0; (d) 4,5; (e) 5,0.</p>
                 
                 <div class="practice-solution">
