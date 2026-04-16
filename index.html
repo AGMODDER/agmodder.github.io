@@ -3627,6 +3627,18 @@
             min-width: max-content;
         }
 
+        @media (max-width: 768px) {
+            .subject-pane p mjx-container:not([display="true"]),
+            .subject-pane li mjx-container:not([display="true"]) {
+                max-width: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                display: inline-block;
+                vertical-align: middle;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
         .subject-pane:not(.active) .sidebar,
         .subject-pane:not(.active) .main-content {
             display: none !important;
@@ -6189,8 +6201,14 @@
                 <div class="example-body">
                     <p><strong>Problema:</strong> Dois corredores partem simultaneamente do mesmo ponto de uma pista circular de $235 \text{ m}$ em direções opostas. O corredor A tem $v_A = 6,0 \text{ m/s}$ e o B tem $v_B = 4,0 \text{ m/s}$. Qual o tempo até o primeiro cruzamento?</p>
                     <p><strong>Dedução por Integração:</strong></p>
-                    <p>Para A: $ds_A = v_A dt \implies \int_{0}^{S_A} ds_A = \int_{0}^{t} 6 dt \implies S_A = 6t$</p>
-                    <p>Para B: $ds_B = v_B dt \implies \int_{0}^{S_B} ds_B = \int_{0}^{t} 4 dt \implies S_B = 4t$</p>
+                    <p>Para A:</p>
+                    <div class="math-display">
+                        \[ ds_A = v_A\,dt \implies \int_{0}^{S_A} ds_A = \int_{0}^{t} 6\,dt \implies S_A = 6t \]
+                    </div>
+                    <p>Para B:</p>
+                    <div class="math-display">
+                        \[ ds_B = v_B\,dt \implies \int_{0}^{S_B} ds_B = \int_{0}^{t} 4\,dt \implies S_B = 4t \]
+                    </div>
                     <p>Condição de cruzamento (a soma dos espaços perfaz a pista completa):</p>
                     <div class="math-display">
                         \[ S_A + S_B = 235 \implies 6t + 4t = 235 \implies 10t = 235 \implies t = 23,5 \text{ s} \]
@@ -6203,12 +6221,20 @@
                 <div class="example-body">
                     <p><strong>Problema:</strong> Abandona-se uma pedra de um prédio de $80 \text{ m}$. Assumindo a origem $y=0$ no solo, quanto tempo até o impacto e qual a velocidade?</p>
                     <p><strong>Passo 1 (Velocidade):</strong> Sabemos que a aceleração é a gravidade para baixo ($a = -g = -10$).</p>
-                    <p>$\frac{dv}{dt} = -10 \implies \int_{0}^{v} dv = \int_{0}^{t} -10 dt \implies v(t) = -10t$</p>
+                    <div class="math-display">
+                        \[ \frac{dv}{dt} = -10 \implies \int_{0}^{v} dv = \int_{0}^{t} -10\,dt \implies v(t) = -10t \]
+                    </div>
                     <p><strong>Passo 2 (Posição):</strong> A velocidade é a derivada da posição.</p>
-                    <p>$\frac{dy}{dt} = -10t \implies \int_{80}^{y} dy = \int_{0}^{t} -10t dt$</p>
-                    <p>$y - 80 = -10\left[\frac{t^2}{2}\right]_0^t \implies y(t) = 80 - 5t^2$</p>
+                    <div class="math-display">
+                        \[ \frac{dy}{dt} = -10t \implies \int_{80}^{y} dy = \int_{0}^{t} -10t\,dt \]
+                    </div>
+                    <div class="math-display">
+                        \[ y - 80 = -10\left[\frac{t^2}{2}\right]_0^t \implies y(t) = 80 - 5t^2 \]
+                    </div>
                     <p><strong>Passo 3 (Impacto):</strong> Toca o solo quando $y = 0$.</p>
-                    <p>$0 = 80 - 5t^2 \implies 5t^2 = 80 \implies t^2 = 16 \implies t = 4 \text{ s}$.</p>
+                    <div class="math-display">
+                        \[ 0 = 80 - 5t^2 \implies 5t^2 = 80 \implies t^2 = 16 \implies t = 4 \text{ s} \]
+                    </div>
                     <p>A velocidade no impacto é $v(4) = -10(4) = -40 \text{ m/s}$.</p>
                 </div>
             </div>
