@@ -7292,6 +7292,7 @@
     let searchFocusIdx = -1;
     const searchIndexBySubject = { algebra: null, calculo: null, fisica: null };
     const mathTypesetDoneBySubject = { algebra: false, calculo: false, fisica: false };
+    const subjectPaneRegistry = {};
     let activeObserver = null;
     const SUBJECT_SCROLL_STORAGE_KEY = 'subjectScrollPositions';
     let scrollSaveTimer = null;
@@ -7352,7 +7353,45 @@
 
     function getActivePane() {
         if (!activeSubject) return null;
-        return document.querySelector('.subject-pane[data-subject="' + activeSubject + '"]');
+        return subjectPaneRegistry[activeSubject] || document.querySelector('.subject-pane[data-subject="' + activeSubject + '"]');
+    }
+
+    function registerSubjectPanes() {
+        document.querySelectorAll('.subject-pane[data-subject]').forEach((pane) => {
+            const subject = pane.getAttribute('data-subject');
+            if (subject && SUBJECTS[subject]) {
+                subjectPaneRegistry[subject] = pane;
+            }
+        });
+    }
+
+    function unmountAllSubjectPanes() {
+        Object.values(subjectPaneRegistry).forEach((pane) => {
+            if (!pane) return;
+            pane.classList.remove('active', 'subject-born');
+            pane.style.display = 'none';
+            if (pane.isConnected) pane.remove();
+        });
+    }
+
+    function mountSubjectPane(subject) {
+        const host = document.getElementById('subjects-host');
+        const targetPane = subjectPaneRegistry[subject];
+        if (!host || !targetPane) return null;
+
+        Array.from(host.querySelectorAll('.subject-pane')).forEach((pane) => {
+            if (pane === targetPane) return;
+            pane.classList.remove('active', 'subject-born');
+            pane.style.display = 'none';
+            pane.remove();
+        });
+
+        if (!targetPane.isConnected) {
+            host.appendChild(targetPane);
+        }
+
+        targetPane.style.display = 'block';
+        return targetPane;
     }
 
     function getScrollTop() {
@@ -7417,19 +7456,8 @@
             return;
         }
 
-        const doTypeset = () => {
-            MathJax.typesetPromise([pane]).then(() => {
-                mathTypesetDoneBySubject[subject] = true;
-                restoreSubjectScroll(subject);
-                updateProgressBar();
-            }).catch(() => {});
-        };
-
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(doTypeset, { timeout: 1200 });
-        } else {
-            setTimeout(doTypeset, 0);
-        }
+        // Instant mode: avoid full-pane MathJax processing during subject switch.
+        // Equations inside dynamically revealed blocks are still typeset on demand.
     }
 
     function updateProgressBar() {
@@ -7709,12 +7737,7 @@
         localStorage.setItem('lastSubject', subject);
         updateHubBackButton();
 
-        document.querySelectorAll('.subject-pane').forEach(pane => {
-            pane.classList.remove('active', 'subject-born');
-            pane.style.display = pane.getAttribute('data-subject') === subject ? 'block' : 'none';
-        });
-
-        const pane = getActivePane();
+        const pane = mountSubjectPane(subject);
         if (!pane) return;
 
         pane.classList.add('active');
@@ -7762,11 +7785,11 @@
 
     function hideHubWithTransition(nextAction) {
         const hub = document.getElementById('hub-selection');
+        if (typeof nextAction === 'function') nextAction();
         hub.classList.add('hub-hidden');
         setTimeout(() => {
             hub.style.display = 'none';
-            if (typeof nextAction === 'function') nextAction();
-        }, 340);
+        }, 180);
     }
 
     document.getElementById('themeBtn').addEventListener('click', toggleTheme);
@@ -7863,6 +7886,7 @@
         const savedTheme = localStorage.getItem('currentTheme') || 'light';
         setTheme(savedTheme);
         markMathAsReadyWhenStartupFinishes();
+        registerSubjectPanes();
 
         updateHubBackButton();
 
@@ -7871,7 +7895,7 @@
             document.getElementById('hub-selection').style.display = 'none';
             setActiveSubject(lastSubject);
         } else {
-            document.querySelectorAll('.subject-pane').forEach(p => p.style.display = 'none');
+            unmountAllSubjectPanes();
             showHub();
         }
 
