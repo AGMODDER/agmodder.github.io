@@ -208,8 +208,8 @@
         }
 
         @keyframes subjectBirth {
-            from { opacity: 0; transform: translateY(16px) scale(0.994); filter: blur(2px); }
-            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         #hub-selection {
@@ -3607,6 +3607,7 @@
 
         .subject-pane .sidebar { top: 64px !important; }
         .subject-pane .main-content { margin-top: 64px !important; }
+        .subject-pane .section:not(.flash-highlight) { animation: none !important; }
 
         .subject-pane:not(.active) .sidebar,
         .subject-pane:not(.active) .main-content {
@@ -7396,6 +7397,41 @@
         window.scrollTo({ top, behavior: 'auto' });
     }
 
+    function markMathAsReadyWhenStartupFinishes() {
+        if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise) return;
+        window.MathJax.startup.promise.then(() => {
+            Object.keys(SUBJECTS).forEach(subject => {
+                const pane = document.querySelector('.subject-pane[data-subject="' + subject + '"]');
+                if (pane && pane.querySelector('mjx-container')) {
+                    mathTypesetDoneBySubject[subject] = true;
+                }
+            });
+        }).catch(() => {});
+    }
+
+    function ensureSubjectMathRendered(subject, pane) {
+        if (!pane || !window.MathJax || !window.MathJax.typesetPromise || mathTypesetDoneBySubject[subject]) return;
+
+        if (pane.querySelector('mjx-container')) {
+            mathTypesetDoneBySubject[subject] = true;
+            return;
+        }
+
+        const doTypeset = () => {
+            MathJax.typesetPromise([pane]).then(() => {
+                mathTypesetDoneBySubject[subject] = true;
+                restoreSubjectScroll(subject);
+                updateProgressBar();
+            }).catch(() => {});
+        };
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(doTypeset, { timeout: 1200 });
+        } else {
+            setTimeout(doTypeset, 0);
+        }
+    }
+
     function updateProgressBar() {
         const bar = document.getElementById('global-progress');
         if (!bar || !activeSubject) {
@@ -7682,26 +7718,24 @@
         if (!pane) return;
 
         pane.classList.add('active');
-        void pane.offsetWidth;
-        pane.classList.add('subject-born');
+        requestAnimationFrame(() => {
+            pane.classList.add('subject-born');
+        });
 
         document.getElementById('currentSubjectLabel').textContent = SUBJECTS[subject].label;
         document.getElementById('global-topbar').classList.add('visible');
 
         bindPaneEvents(pane);
-        setupScrollSpyForActivePane();
         syncResponsiveLayout();
 
         restoreSubjectScroll(subject);
         updateProgressBar();
 
-        if (window.MathJax && window.MathJax.typesetPromise && !mathTypesetDoneBySubject[subject]) {
-            window.MathJax.typesetPromise([pane]).then(() => {
-                mathTypesetDoneBySubject[subject] = true;
-                restoreSubjectScroll(subject);
-                updateProgressBar();
-            }).catch(() => {});
-        }
+        requestAnimationFrame(() => {
+            setupScrollSpyForActivePane();
+        });
+
+        ensureSubjectMathRendered(subject, pane);
     }
 
     function updateHubBackButton() {
@@ -7828,6 +7862,7 @@
     (function init() {
         const savedTheme = localStorage.getItem('currentTheme') || 'light';
         setTheme(savedTheme);
+        markMathAsReadyWhenStartupFinishes();
 
         updateHubBackButton();
 
