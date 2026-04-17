@@ -195,6 +195,8 @@
             overflow: hidden;
             background: rgba(71, 85, 105, 0.4);
             border: 1px solid rgba(100, 116, 139, 0.55);
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
         [data-theme="dark"] .app-loading-bar-track {
@@ -210,7 +212,7 @@
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-emerald));
             transform-origin: left center;
             transform: scaleX(0);
-            transition: transform 120ms linear;
+            transition: transform 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
             will-change: transform;
         }
 
@@ -6656,21 +6658,18 @@
     const LEGACY_THEME_STORAGE_KEY = 'currentTheme';
     const LOADING_MIN_VISIBLE_MS = 420;
     const LOADING_FADE_OUT_MS = 300;
-    const LOADING_PROGRESS_MAX_WHILE_BUSY = 96;
-    const LOADING_COMPLETE_HOLD_MS = 160;
-    const LOADING_START_PROGRESS = 18;
-    const LOADING_PROGRESS_MIN_ON_RESUME = 28;
-    const LOADING_FINAL_RAMP_MIN_MS = 520;
-    const LOADING_BAR_DEFAULT_TRANSITION = 'transform 120ms linear';
+    const LOADING_PROGRESS_MAX_WHILE_BUSY = 94;
+    const LOADING_COMPLETE_HOLD_MS = 250;
+    const LOADING_START_PROGRESS = 15;
+    const TRICKLE_INTERVAL_MS = 400;
     let scrollSaveTimer = null;
     let scrollTicking = false;
     let loadingPendingCount = 0;
     let loadingVisibleSince = 0;
     let loadingHideTimer = null;
     let loadingFadeTimer = null;
+    let loadingTrickleTimer = null;
     let loadingProgressValue = 0;
-    let loadingProgressRafId = 0;
-    let loadingProgressLastTs = 0;
 
     function safeStorageGet(key) {
         try {
@@ -6760,7 +6759,7 @@
         bar.style.transition = 'transform ' + duration + 'ms ' + (easing || 'linear');
     }
 
-    function setLoadingProgress(nextValue, immediate) {
+    function setLoadingProgress(nextValue) {
         const parts = getLoadingOverlayParts();
         const bar = parts.bar;
         if (!bar) return;
@@ -6769,50 +6768,25 @@
         loadingProgressValue = clamped;
         const scaleValue = clamped / 100;
 
-        if (immediate) {
-            bar.style.transition = 'none';
-            bar.style.transform = 'scaleX(' + scaleValue + ')';
-            bar.offsetHeight;
-            bar.style.transition = LOADING_BAR_DEFAULT_TRANSITION;
-        } else {
-            bar.style.transform = 'scaleX(' + scaleValue + ')';
+        bar.style.transform = 'scaleX(' + scaleValue + ')';
+    }
+
+    function trickleProgress() {
+        if (loadingPendingCount <= 0) {
+            loadingTrickleTimer = null;
+            return;
         }
-    }
 
-    function stopLoadingProgressTicker() {
-        if (!loadingProgressRafId) return;
-        cancelAnimationFrame(loadingProgressRafId);
-        loadingProgressRafId = 0;
-        loadingProgressLastTs = 0;
-    }
+        const remaining = LOADING_PROGRESS_MAX_WHILE_BUSY - loadingProgressValue;
+        if (remaining > 0) {
+            const randomModifier = Math.random() * 0.5 + 0.5;
+            let step = remaining * 0.1 * randomModifier;
+            if (step < 0.5) step = 0.5;
+            const nextTarget = Math.min(LOADING_PROGRESS_MAX_WHILE_BUSY, loadingProgressValue + step);
+            setLoadingProgress(nextTarget);
+        }
 
-    function startLoadingProgressTicker() {
-        if (loadingProgressRafId) return;
-
-        const animate = (ts) => {
-            if (loadingPendingCount <= 0) {
-                loadingProgressRafId = 0;
-                loadingProgressLastTs = 0;
-                return;
-            }
-
-            if (!loadingProgressLastTs) {
-                loadingProgressLastTs = ts;
-            }
-
-            const dt = Math.min(80, Math.max(8, ts - loadingProgressLastTs));
-            loadingProgressLastTs = ts;
-
-            if (loadingProgressValue < LOADING_PROGRESS_MAX_WHILE_BUSY) {
-                const remaining = LOADING_PROGRESS_MAX_WHILE_BUSY - loadingProgressValue;
-                const step = Math.max(0.22, remaining * 0.055) * (dt / 16.67);
-                setLoadingProgress(Math.min(LOADING_PROGRESS_MAX_WHILE_BUSY, loadingProgressValue + step));
-            }
-
-            loadingProgressRafId = requestAnimationFrame(animate);
-        };
-
-        loadingProgressRafId = requestAnimationFrame(animate);
+        loadingTrickleTimer = setTimeout(trickleProgress, TRICKLE_INTERVAL_MS);
     }
 
     function startLoading(titleText, hintText) {
@@ -6838,6 +6812,10 @@
             clearTimeout(loadingFadeTimer);
             loadingFadeTimer = null;
         }
+        if (loadingTrickleTimer) {
+            clearTimeout(loadingTrickleTimer);
+            loadingTrickleTimer = null;
+        }
 
         overlay.classList.remove('is-hiding');
 
@@ -6849,44 +6827,49 @@
         }
 
         document.body.classList.add('app-loading');
-        setLoadingBarTransition(120, 'linear');
 
         if (wasIdle) {
-            setLoadingProgress(LOADING_START_PROGRESS, true);
-        } else if (loadingProgressValue < LOADING_PROGRESS_MIN_ON_RESUME) {
-            setLoadingProgress(LOADING_PROGRESS_MIN_ON_RESUME);
+            setLoadingBarTransition(0, 'linear');
+            setLoadingProgress(0);
+            if (parts.bar) parts.bar.getBoundingClientRect();
+            setLoadingBarTransition(400, 'cubic-bezier(0.25, 0.8, 0.25, 1)');
+
+            setTimeout(() => {
+                if (loadingPendingCount > 0) {
+                    setLoadingProgress(LOADING_START_PROGRESS);
+                }
+            }, 10);
+        } else if (loadingProgressValue < LOADING_START_PROGRESS) {
+            setLoadingProgress(LOADING_START_PROGRESS);
         }
 
-        startLoadingProgressTicker();
+        loadingTrickleTimer = setTimeout(trickleProgress, TRICKLE_INTERVAL_MS);
     }
 
     function finishLoading() {
         loadingPendingCount = Math.max(0, loadingPendingCount - 1);
         if (loadingPendingCount > 0) return;
 
-        stopLoadingProgressTicker();
+        if (loadingTrickleTimer) {
+            clearTimeout(loadingTrickleTimer);
+            loadingTrickleTimer = null;
+        }
 
         const parts = getLoadingOverlayParts();
         const overlay = parts.overlay;
         if (!overlay || !overlay.classList.contains('is-visible')) {
             document.body.classList.remove('app-loading');
-            setLoadingProgress(0, true);
+            setLoadingBarTransition(0, 'linear');
+            setLoadingProgress(0);
             return;
         }
 
         const elapsed = Date.now() - loadingVisibleSince;
         const remainingToMin = Math.max(0, LOADING_MIN_VISIBLE_MS - elapsed);
-        const finalRampDuration = Math.max(LOADING_FINAL_RAMP_MIN_MS, remainingToMin + 260);
-        const rampFrom = Math.max(loadingProgressValue, 62);
+        setLoadingBarTransition(250, 'cubic-bezier(0.22, 1, 0.36, 1)');
+        setLoadingProgress(100);
 
-        setLoadingBarTransition(Math.max(280, finalRampDuration - 40), 'cubic-bezier(0.22, 1, 0.36, 1)');
-        setLoadingProgress(rampFrom);
-
-        requestAnimationFrame(() => {
-            setLoadingProgress(100);
-        });
-
-        const wait = finalRampDuration + LOADING_COMPLETE_HOLD_MS;
+        const wait = remainingToMin + LOADING_COMPLETE_HOLD_MS + 250;
 
         if (loadingHideTimer) clearTimeout(loadingHideTimer);
         if (loadingFadeTimer) clearTimeout(loadingFadeTimer);
@@ -6898,8 +6881,8 @@
                 overlay.classList.remove('is-visible', 'is-hiding');
                 document.body.classList.remove('app-loading');
                 loadingVisibleSince = 0;
-                setLoadingBarTransition(120, 'linear');
-                setLoadingProgress(0, true);
+                setLoadingBarTransition(0, 'linear');
+                setLoadingProgress(0);
             }, LOADING_FADE_OUT_MS);
         }, wait);
     }
