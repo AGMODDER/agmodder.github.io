@@ -1923,6 +1923,8 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 16px;
+            padding-right: 132px;
+            min-height: 30px;
         }
 
         .exercise-title {
@@ -2025,6 +2027,7 @@
             .exercise-header {
                 flex-direction: column;
                 gap: 8px;
+                padding-right: 124px;
             }
             .exercise-badge { align-self: flex-start; }
             .search-modal {
@@ -2083,6 +2086,12 @@
             }
             .section-header h2 { font-size: 1.16rem; }
             .section-header .subtitle { font-size: 0.8rem; }
+            .section .section-header .study-check-wrap.section-check {
+                margin-top: 2px;
+            }
+            .exercise-header {
+                padding-right: 116px;
+            }
             .proof-toggle { padding: 12px 14px; }
             .proof-content { padding: 0 14px 14px; }
             .search-input-wrap { padding: 12px 14px; }
@@ -2254,6 +2263,13 @@
 
         .section .section-header {
             position: relative;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .section .section-header > div:nth-child(2) {
+            flex: 1 1 260px;
+            min-width: 0;
         }
 
         .section .section-header .study-check-wrap.section-check {
@@ -6651,6 +6667,27 @@
         node.classList.toggle('study-complete', !!studyProgressState[key]);
     }
 
+    function setSectionExercisesCompletion(section, completed) {
+        if (!section) return;
+
+        const cards = Array.from(section.querySelectorAll('.exercise-card')).filter((card) => {
+            const owner = card.closest('.section[id]');
+            return owner === section;
+        });
+
+        cards.forEach((card) => {
+            const cardKey = card.dataset.studyKey;
+            if (!cardKey) return;
+
+            studyProgressState[cardKey] = !!completed;
+            applyStudyVisualState(card, cardKey);
+
+            const cardInput = card.querySelector(':scope > .study-check-wrap.exercise-check input')
+                || card.querySelector('.study-check-wrap.exercise-check input');
+            if (cardInput) cardInput.checked = !!completed;
+        });
+    }
+
     function upsertSectionStudyCheckbox(section, key) {
         const header = section.querySelector(':scope > .section-header');
         if (!header) return;
@@ -6672,7 +6709,9 @@
         if (input.dataset.boundStudy !== '1') {
             input.dataset.boundStudy = '1';
             input.addEventListener('change', () => {
-                studyProgressState[key] = !!input.checked;
+                const completed = !!input.checked;
+                studyProgressState[key] = completed;
+                setSectionExercisesCompletion(section, completed);
                 persistStudyProgressState();
                 applyStudyVisualState(section, key);
                 updateProgressBar();
