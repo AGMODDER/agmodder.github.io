@@ -306,6 +306,14 @@
             font-size: 1rem;
         }
 
+        .global-btn.mobile-sidebar {
+            display: none;
+        }
+
+        .global-btn.mobile-sidebar.is-hidden {
+            display: none !important;
+        }
+
         .global-btn.search {
             padding: 0 12px;
             gap: 8px;
@@ -325,6 +333,29 @@
         #subjects-host {
             position: relative;
             min-height: 100vh;
+        }
+
+        .mobile-sidebar-backdrop {
+            position: fixed;
+            inset: 64px 0 0 0;
+            z-index: 10085;
+            background: rgba(15, 23, 42, 0.28);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.22s ease, visibility 0.22s ease;
+        }
+
+        [data-theme="dark"] .mobile-sidebar-backdrop {
+            background: rgba(2, 6, 23, 0.56);
+        }
+
+        body.mobile-sidebar-active .mobile-sidebar-backdrop {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
 
         .subject-pane {
@@ -687,6 +718,10 @@
         @media (max-width: 1024px) {
             #global-topbar {
                 padding: 0 12px;
+            }
+
+            .global-btn.mobile-sidebar {
+                display: inline-flex;
             }
 
             .global-title-text small {
@@ -2341,6 +2376,22 @@
                 transform: translateX(-100%) !important;
             }
 
+            .subject-pane.mobile-sidebar-open .sidebar {
+                display: block !important;
+                position: fixed;
+                top: 64px !important;
+                left: 0;
+                bottom: 0;
+                width: min(86vw, 320px);
+                z-index: 10095;
+                transform: translateX(0) !important;
+                box-shadow: 0 16px 36px rgba(2, 6, 23, 0.28);
+            }
+
+            body.mobile-sidebar-active {
+                overflow: hidden;
+            }
+
             .subject-pane .main-content {
                 margin-left: 0 !important;
                 padding: 20px 18px 60px !important;
@@ -2528,6 +2579,7 @@
         </div>
 
         <div class="global-actions">
+            <button class="global-btn icon mobile-sidebar is-hidden" id="mobileSidebarBtn" type="button" title="Abrir indice" aria-label="Abrir indice da materia" aria-expanded="false">☰</button>
             <button class="global-btn search" id="topSearchBtn" type="button" title="Busca contextual">
                 <span>🔍</span>
                 <span class="label">Buscar</span>
@@ -2537,6 +2589,8 @@
             <button class="global-btn icon" id="switchSubjectBtn" type="button" title="Trocar Materia">⊞</button>
         </div>
     </header>
+
+    <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop" aria-hidden="true"></div>
 
     <section id="hub-selection" aria-label="Selecionar materia">
         <div class="hub-shell">
@@ -6817,6 +6871,57 @@
         return subjectPaneRegistry[activeSubject] || document.querySelector('.subject-pane[data-subject="' + activeSubject + '"]');
     }
 
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 1024px)').matches;
+    }
+
+    function updateMobileSidebarButtonState() {
+        const btn = document.getElementById('mobileSidebarBtn');
+        if (!btn) return;
+
+        const canUse = !!activeSubject && isMobileViewport();
+        btn.classList.toggle('is-hidden', !canUse);
+
+        if (!canUse) {
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function closeMobileSidebar() {
+        Object.values(subjectPaneRegistry).forEach((pane) => {
+            if (!pane) return;
+            pane.classList.remove('mobile-sidebar-open');
+        });
+
+        document.body.classList.remove('mobile-sidebar-active');
+
+        const btn = document.getElementById('mobileSidebarBtn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function openMobileSidebar() {
+        if (!isMobileViewport()) return;
+
+        const pane = getActivePane();
+        if (!pane) return;
+
+        pane.classList.add('mobile-sidebar-open');
+        document.body.classList.add('mobile-sidebar-active');
+
+        const btn = document.getElementById('mobileSidebarBtn');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+
+    function toggleMobileSidebarDrawer() {
+        if (!isMobileViewport()) return;
+
+        if (document.body.classList.contains('mobile-sidebar-active')) {
+            closeMobileSidebar();
+        } else {
+            openMobileSidebar();
+        }
+    }
+
     function registerSubjectPanes() {
         document.querySelectorAll('.subject-pane[data-subject]').forEach((pane) => {
             const subject = pane.getAttribute('data-subject');
@@ -7366,6 +7471,7 @@
 
     function openSearch() {
         if (!activeSubject) return;
+        closeMobileSidebar();
         const overlay = document.getElementById('searchOverlay');
         const input = document.getElementById('searchInput');
         overlay.classList.add('active');
@@ -7443,6 +7549,7 @@
                         sidebar.classList.add('collapsed');
                         main.classList.add('expanded');
                     }
+                    closeMobileSidebar();
                 }
             });
         });
@@ -7487,9 +7594,12 @@
     }
 
     function syncResponsiveLayout() {
+        const isMobile = isMobileViewport();
+        updateMobileSidebarButtonState();
+
         const pane = getActivePane();
         if (!pane) return;
-        const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+
         const sidebar = pane.querySelector('.sidebar');
         const main = pane.querySelector('.main-content');
         if (!sidebar || !main) return;
@@ -7497,8 +7607,11 @@
         if (isMobile) {
             sidebar.classList.add('collapsed');
             main.classList.add('expanded');
-        } else if (!sidebar.classList.contains('collapsed')) {
-            main.classList.remove('expanded');
+        } else {
+            closeMobileSidebar();
+            if (!sidebar.classList.contains('collapsed')) {
+                main.classList.remove('expanded');
+            }
         }
     }
 
@@ -7514,6 +7627,7 @@
             }
             restoreSubjectScroll(subject);
             updateProgressBar();
+            updateMobileSidebarButtonState();
             return;
         }
 
@@ -7524,6 +7638,7 @@
         activeSubject = subject;
         safeStorageSet('lastSubject', subject);
         updateHubBackButton();
+        updateMobileSidebarButtonState();
 
         const pane = mountSubjectPane(subject);
         if (!pane) {
@@ -7542,6 +7657,7 @@
         bindPaneEvents(pane);
         registerStudyItemsForPane(subject, pane);
         applyReviewScheduleToPane(subject, pane);
+        closeMobileSidebar();
         syncResponsiveLayout();
 
         restoreSubjectScroll(subject);
@@ -7572,6 +7688,8 @@
 
     function showHub() {
         const hub = document.getElementById('hub-selection');
+        closeMobileSidebar();
+        updateMobileSidebarButtonState();
         updateHubBackButton();
         hub.style.display = 'flex';
         requestAnimationFrame(() => {
@@ -7604,6 +7722,14 @@
 
     document.getElementById('topSearchBtn').addEventListener('click', () => {
         openSearch();
+    });
+
+    document.getElementById('mobileSidebarBtn').addEventListener('click', () => {
+        toggleMobileSidebarDrawer();
+    });
+
+    document.getElementById('mobileSidebarBackdrop').addEventListener('click', () => {
+        closeMobileSidebar();
     });
 
     document.querySelectorAll('.hub-card').forEach(card => {
@@ -7662,6 +7788,12 @@
                 closeSearch();
                 return;
             }
+
+            if (document.body.classList.contains('mobile-sidebar-active')) {
+                closeMobileSidebar();
+                return;
+            }
+
             const hub = document.getElementById('hub-selection');
             if (hub.style.display !== 'none' && activeSubject) {
                 hub.classList.add('hub-hidden');
@@ -7705,6 +7837,7 @@
         bindSystemThemeListener();
         markMathAsReadyWhenStartupFinishes();
         registerSubjectPanes();
+        updateMobileSidebarButtonState();
 
         updateHubBackButton();
 
