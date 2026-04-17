@@ -73,6 +73,10 @@
             background: var(--bg-primary);
         }
 
+        body.app-loading {
+            overflow: hidden;
+        }
+
         #global-progress {
             position: fixed;
             top: 0;
@@ -83,6 +87,86 @@
             z-index: 10050;
             transition: width 0.15s ease;
             border-radius: 0 2px 2px 0;
+        }
+
+        .app-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(8, 16, 35, 0.46);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.32s ease, visibility 0.32s ease;
+        }
+
+        [data-theme="dark"] .app-loading-overlay {
+            background: rgba(3, 8, 22, 0.62);
+        }
+
+        .app-loading-overlay.is-visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .app-loading-overlay.is-hiding {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .app-loading-card {
+            width: min(390px, 94vw);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 16px;
+            border-radius: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .app-loading-spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid rgba(148, 163, 184, 0.28);
+            border-top-color: var(--accent-blue);
+            border-right-color: var(--accent-cyan);
+            animation: loadingSpin 0.85s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes loadingSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        .app-loading-copy {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .app-loading-title {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.25;
+            letter-spacing: 0.01em;
+        }
+
+        .app-loading-hint {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.35;
         }
 
         #global-topbar {
@@ -2393,6 +2477,16 @@
 </head>
 <body>
     <div id="global-progress"></div>
+
+    <div id="appLoadingOverlay" class="app-loading-overlay is-visible" role="status" aria-live="polite" aria-atomic="true">
+        <div class="app-loading-card">
+            <div class="app-loading-spinner" aria-hidden="true"></div>
+            <div class="app-loading-copy">
+                <strong id="appLoadingTitle" class="app-loading-title">Carregando</strong>
+                <span id="appLoadingHint" class="app-loading-hint">Preparando seu ambiente de estudo...</span>
+            </div>
+        </div>
+    </div>
 
     <header id="global-topbar" aria-label="Barra superior global">
         <div class="global-title">
@@ -6359,8 +6453,14 @@
     const REVIEW_SCHEDULE_STORAGE_KEY = 'reviewScheduleStateV1';
     const THEME_PREFERENCE_STORAGE_KEY = 'themePreferenceV1';
     const LEGACY_THEME_STORAGE_KEY = 'currentTheme';
+    const LOADING_MIN_VISIBLE_MS = 420;
+    const LOADING_FADE_OUT_MS = 300;
     let scrollSaveTimer = null;
     let scrollTicking = false;
+    let loadingPendingCount = 0;
+    let loadingVisibleSince = 0;
+    let loadingHideTimer = null;
+    let loadingFadeTimer = null;
 
     function safeStorageGet(key) {
         try {
@@ -6431,6 +6531,99 @@
         const hit = escapeHtml(raw.substring(idx, idx + query.length));
         const after = escapeHtml(raw.substring(idx + query.length));
         return before + '<mark>' + hit + '</mark>' + after;
+    }
+
+    function getLoadingOverlayParts() {
+        return {
+            overlay: document.getElementById('appLoadingOverlay'),
+            title: document.getElementById('appLoadingTitle'),
+            hint: document.getElementById('appLoadingHint')
+        };
+    }
+
+    function startLoading(titleText, hintText) {
+        loadingPendingCount += 1;
+
+        const parts = getLoadingOverlayParts();
+        const overlay = parts.overlay;
+        if (!overlay) return;
+
+        if (parts.title && typeof titleText === 'string' && titleText.trim()) {
+            parts.title.textContent = titleText;
+        }
+        if (parts.hint && typeof hintText === 'string' && hintText.trim()) {
+            parts.hint.textContent = hintText;
+        }
+
+        if (loadingHideTimer) {
+            clearTimeout(loadingHideTimer);
+            loadingHideTimer = null;
+        }
+        if (loadingFadeTimer) {
+            clearTimeout(loadingFadeTimer);
+            loadingFadeTimer = null;
+        }
+
+        overlay.classList.remove('is-hiding');
+
+        if (!overlay.classList.contains('is-visible')) {
+            overlay.classList.add('is-visible');
+            loadingVisibleSince = Date.now();
+        } else if (!loadingVisibleSince) {
+            loadingVisibleSince = Date.now();
+        }
+
+        document.body.classList.add('app-loading');
+    }
+
+    function finishLoading() {
+        loadingPendingCount = Math.max(0, loadingPendingCount - 1);
+        if (loadingPendingCount > 0) return;
+
+        const parts = getLoadingOverlayParts();
+        const overlay = parts.overlay;
+        if (!overlay || !overlay.classList.contains('is-visible')) {
+            document.body.classList.remove('app-loading');
+            return;
+        }
+
+        const elapsed = Date.now() - loadingVisibleSince;
+        const wait = Math.max(0, LOADING_MIN_VISIBLE_MS - elapsed);
+
+        if (loadingHideTimer) clearTimeout(loadingHideTimer);
+        if (loadingFadeTimer) clearTimeout(loadingFadeTimer);
+
+        loadingHideTimer = setTimeout(() => {
+            overlay.classList.add('is-hiding');
+            loadingFadeTimer = setTimeout(() => {
+                if (loadingPendingCount > 0) return;
+                overlay.classList.remove('is-visible', 'is-hiding');
+                document.body.classList.remove('app-loading');
+            }, LOADING_FADE_OUT_MS);
+        }, wait);
+    }
+
+    function waitForMathIdle(subject, timeoutMs) {
+        return new Promise((resolve) => {
+            const startedAt = Date.now();
+            const limit = Number.isFinite(timeoutMs) ? timeoutMs : 3200;
+
+            const tick = () => {
+                if (!mathTypesetInFlightBySubject[subject]) {
+                    resolve();
+                    return;
+                }
+
+                if ((Date.now() - startedAt) >= limit) {
+                    resolve();
+                    return;
+                }
+
+                requestAnimationFrame(tick);
+            };
+
+            tick();
+        });
     }
 
     function detectSystemTheme() {
@@ -7194,6 +7387,8 @@
             return;
         }
 
+        startLoading('Carregando', 'Abrindo ' + SUBJECTS[subject].label + '...');
+
         saveCurrentSubjectScroll();
 
         activeSubject = subject;
@@ -7201,7 +7396,10 @@
         updateHubBackButton();
 
         const pane = mountSubjectPane(subject);
-        if (!pane) return;
+        if (!pane) {
+            finishLoading();
+            return;
+        }
 
         pane.classList.add('active');
         requestAnimationFrame(() => {
@@ -7224,6 +7422,9 @@
         });
 
         ensureSubjectMathRendered(subject, pane);
+        waitForMathIdle(subject).then(() => {
+            finishLoading();
+        });
     }
 
     function updateHubBackButton() {
@@ -7366,6 +7567,8 @@
     });
 
     (function init() {
+        startLoading('Carregando', 'Preparando seu ambiente de estudo...');
+
         const savedTheme = getStoredThemePreference();
         const initialTheme = savedTheme || detectSystemTheme();
         setTheme(initialTheme, false);
@@ -7385,6 +7588,7 @@
         }
 
         updateProgressBar();
+        finishLoading();
     })();
 
     const StudyHub = Object.freeze({
