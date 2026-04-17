@@ -5219,6 +5219,57 @@
             </div>
 
             <div class="theorem">
+                <p><strong>Dedução Integral do Lançamento Oblíquo (Método de Sala)</strong></p>
+                <p>Considere o lançamento de uma bola sob um ângulo $\theta$ com a horizontal com velocidade $V_0$. Substituímos a memorização de fórmulas pela integração direta por eixos físicos isolados:</p>
+
+                <p><strong>(i) O movimento ao longo do eixo-X (A bola transita com velocidade constante):</strong></p>
+                <p>Como não há aceleração atuando na horizontal (ignorando resistência do ar):</p>
+                <div class="math-display">
+                    \[ V_x = V_{0x} = V_0 \cos\theta \]
+                </div>
+                <div class="math-display">
+                    \[ x(t) = V_{0x} \cdot t \implies x(t) = (V_0 \cos\theta) \cdot t \]
+                </div>
+
+                <hr style="margin: 15px 0; border: none; border-bottom: 1px solid rgba(0,0,0,0.1);">
+
+                <p><strong>(ii) O movimento ao longo do eixo-Y (A bola tem velocidade variável):</strong></p>
+                <p>A força da gravidade atua para baixo, fornecendo uma aceleração $a_y = -g$. Isolamos as diferenciais:</p>
+                <div class="math-display">
+                    \[ \frac{dv_y}{dt} = -g \implies dv_y = -g \, dt \]
+                </div>
+
+                <p>Aplicando a regra da integral indefinida/definida em ambos os lados e sabendo que a velocidade inicial vertical é $V_{0y} = V_0 \sin\theta$:</p>
+                <div class="math-display">
+                    \[ \int_{V_{0y}}^{V_y} dv'_y = \int_{0}^{t} -g \, dt' \]
+                </div>
+                <div class="math-display">
+                    \[ V'_y \Big|_{V_{0y}}^{V_y} = -gt' \Big|_{0}^{t} \implies V_y - V_{0y} = -gt - 0 \]
+                </div>
+                <div class="math-display">
+                    \[ V_y(t) = V_{0y} - gt \]
+                </div>
+
+                <p>Agora que descobrimos a função da velocidade vertical, aplicamos o conceito de que $V_y = \frac{dy}{dt}$ para encontrar a função do deslocamento Y (chamativo de altura $h$ em sala):</p>
+                <div class="math-display">
+                    \[ \frac{dy}{dt} = (V_0 \sin\theta - gt) \implies dy = (V_0 \sin\theta - gt) \, dt \]
+                </div>
+                <div class="math-display">
+                    \[ \int_{0}^{h} dy = \int_{0}^{t} (V_0 \sin\theta - gt') \, dt' \]
+                </div>
+                <div class="math-display">
+                    \[ h - 0 = (V_0 \sin\theta) \cdot t - \left( g \frac{t'^2}{2} \right) \Bigg|_{0}^{t} \]
+                </div>
+
+                <p>Consolidando, chegamos na equação demonstrada em sala:</p>
+                <div class="math-display" style="background:#f4f7fb; padding:10px; border-radius:8px;">
+                    \[ h(t) = V_0 \sin\theta \cdot t - \frac{g t^2}{2} \]
+                </div>
+
+                <p><em>*Nota: Nos exemplos que envolvem este tema, como a Questão da Moto no precipício (4.18) ou da Bola de neve (4.20), frequentemente substituímos uma fórmula na outra para remover a variável $t$, formando uma equação cartesiana da trajetória.</em></p>
+            </div>
+
+            <div class="theorem">
                 <p><strong>Dedução da Equação Cartesiana da Trajetória</strong></p>
                 <p>Para determinar o traçado físico independente da contagem de tempo, isolamos $t$ na equação horizontal e substituímos na equação vertical:</p>
                 <p>1. Da equação X: $t = \frac{x}{v_0\cos\theta}$</p>
