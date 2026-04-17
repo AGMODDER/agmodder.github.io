@@ -6074,6 +6074,8 @@
     const SUBJECT_SCROLL_STORAGE_KEY = 'subjectScrollPositions';
     const STUDY_PROGRESS_STORAGE_KEY = 'studyProgressStateV1';
     const REVIEW_SCHEDULE_STORAGE_KEY = 'reviewScheduleStateV1';
+    const THEME_PREFERENCE_STORAGE_KEY = 'themePreferenceV1';
+    const LEGACY_THEME_STORAGE_KEY = 'currentTheme';
     let scrollSaveTimer = null;
     let scrollTicking = false;
 
@@ -6131,21 +6133,60 @@
         return before + '<mark>' + hit + '</mark>' + after;
     }
 
-    function setTheme(theme) {
+    function detectSystemTheme() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark';
+        }
+        return 'light';
+    }
+
+    function getStoredThemePreference() {
+        const theme = localStorage.getItem(THEME_PREFERENCE_STORAGE_KEY);
+        if (theme === 'dark' || theme === 'light') return theme;
+
+        // Compatibilidade com versões anteriores.
+        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        if (legacy === 'dark' || legacy === 'light') return legacy;
+
+        return null;
+    }
+
+    function setTheme(theme, persistUserPreference) {
         const normalized = theme === 'dark' ? 'dark' : 'light';
         if (normalized === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
         } else {
             document.body.removeAttribute('data-theme');
         }
-        localStorage.setItem('currentTheme', normalized);
+
+        if (persistUserPreference) {
+            localStorage.setItem(THEME_PREFERENCE_STORAGE_KEY, normalized);
+            localStorage.setItem(LEGACY_THEME_STORAGE_KEY, normalized);
+        }
+
         const btn = document.getElementById('themeBtn');
         if (btn) btn.textContent = normalized === 'dark' ? '☀' : '◐';
     }
 
     function toggleTheme() {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
-        setTheme(isDark ? 'light' : 'dark');
+        setTheme(isDark ? 'light' : 'dark', true);
+    }
+
+    function bindSystemThemeListener() {
+        if (!window.matchMedia) return;
+
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const onChange = (event) => {
+            if (getStoredThemePreference()) return;
+            setTheme(event.matches ? 'dark' : 'light', false);
+        };
+
+        if (typeof media.addEventListener === 'function') {
+            media.addEventListener('change', onChange);
+        } else if (typeof media.addListener === 'function') {
+            media.addListener(onChange);
+        }
     }
 
     function getActivePane() {
@@ -6997,8 +7038,10 @@
     });
 
     (function init() {
-        const savedTheme = localStorage.getItem('currentTheme') || 'light';
-        setTheme(savedTheme);
+        const savedTheme = getStoredThemePreference();
+        const initialTheme = savedTheme || detectSystemTheme();
+        setTheme(initialTheme, false);
+        bindSystemThemeListener();
         markMathAsReadyWhenStartupFinishes();
         registerSubjectPanes();
 
