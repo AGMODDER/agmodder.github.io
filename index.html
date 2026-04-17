@@ -2438,7 +2438,7 @@
         <section class="subject-pane" data-subject="algebra" aria-label="Materia Algebra Linear 2">
 <nav class="sidebar" id="algebra-sidebar">
         <div class="sidebar-search-wrap">
-            <button class="sidebar-search-btn" onclick="openSearch()">
+            <button class="sidebar-search-btn">
                 <span class="ss-icon">⌕</span>
                 <span class="ss-text">Buscar...</span>
                 <kbd>Ctrl K</kbd>
@@ -3834,7 +3834,7 @@
         <section class="subject-pane" data-subject="calculo" aria-label="Materia Calculo 2">
 <nav class="sidebar" id="calculo-sidebar">
         <div class="sidebar-search-wrap">
-            <button class="sidebar-search-btn" onclick="openSearch()">
+            <button class="sidebar-search-btn">
                 <span class="ss-icon">⌕</span>
                 <span class="ss-text">Buscar...</span>
                 <kbd>Ctrl K</kbd>
@@ -6346,10 +6346,27 @@
     let scrollSaveTimer = null;
     let scrollTicking = false;
 
-    function loadStoredObject(key) {
+    function safeStorageGet(key) {
         try {
-            const raw = localStorage.getItem(key);
-            if (!raw) return {};
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function safeStorageSet(key, value) {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function loadStoredObject(key) {
+        const raw = safeStorageGet(key);
+        if (!raw) return {};
+        try {
             const parsed = JSON.parse(raw);
             return parsed && typeof parsed === 'object' ? parsed : {};
         } catch (e) {
@@ -6408,11 +6425,11 @@
     }
 
     function getStoredThemePreference() {
-        const theme = localStorage.getItem(THEME_PREFERENCE_STORAGE_KEY);
+        const theme = safeStorageGet(THEME_PREFERENCE_STORAGE_KEY);
         if (theme === 'dark' || theme === 'light') return theme;
 
         // Compatibilidade com versões anteriores.
-        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        const legacy = safeStorageGet(LEGACY_THEME_STORAGE_KEY);
         if (legacy === 'dark' || legacy === 'light') return legacy;
 
         return null;
@@ -6427,8 +6444,8 @@
         }
 
         if (persistUserPreference) {
-            localStorage.setItem(THEME_PREFERENCE_STORAGE_KEY, normalized);
-            localStorage.setItem(LEGACY_THEME_STORAGE_KEY, normalized);
+            safeStorageSet(THEME_PREFERENCE_STORAGE_KEY, normalized);
+            safeStorageSet(LEGACY_THEME_STORAGE_KEY, normalized);
         }
 
         const btn = document.getElementById('themeBtn');
@@ -6746,6 +6763,10 @@
                 if (lockNode) lockNode.remove();
             }
         });
+
+        // Visibility of exercises changes with spaced-repetition locks; rebuild search index lazily.
+        searchIndexBySubject[subject] = null;
+        searchEngineBySubject[subject] = null;
     }
 
     function ensureReviewControls(btn, solution) {
@@ -6878,6 +6899,7 @@
         });
 
         pane.querySelectorAll('.exercise-card').forEach((card, i) => {
+            if (card.style.display === 'none') return;
             const titleEl = card.querySelector('.exercise-title, h3, h4');
             const title = titleEl ? titleEl.textContent.trim() : 'Exercicio ' + (i + 1);
             const firstP = card.querySelector('p');
@@ -7136,7 +7158,7 @@
         saveCurrentSubjectScroll();
 
         activeSubject = subject;
-        localStorage.setItem('lastSubject', subject);
+        safeStorageSet('lastSubject', subject);
         updateHubBackButton();
 
         const pane = mountSubjectPane(subject);
@@ -7314,7 +7336,7 @@
 
         updateHubBackButton();
 
-        const lastSubject = localStorage.getItem('lastSubject');
+        const lastSubject = safeStorageGet('lastSubject');
         if (lastSubject && SUBJECTS[lastSubject]) {
             document.getElementById('hub-selection').style.display = 'none';
             setActiveSubject(lastSubject);
