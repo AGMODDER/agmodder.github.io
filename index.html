@@ -3685,6 +3685,18 @@
             }
         }
 
+        @media (max-width: 1024px) {
+            .subject-pane .sidebar {
+                display: none !important;
+                transform: translateX(-100%) !important;
+            }
+
+            .subject-pane .main-content {
+                margin-left: 0 !important;
+                padding: 20px 18px 60px !important;
+            }
+        }
+
         .subject-pane:not(.active) .sidebar,
         .subject-pane:not(.active) .main-content {
             display: none !important;
@@ -7382,6 +7394,7 @@
     let searchFocusIdx = -1;
     const searchIndexBySubject = { algebra: null, calculo: null, fisica: null };
     const mathTypesetDoneBySubject = { algebra: false, calculo: false, fisica: false };
+    const mathTypesetInFlightBySubject = { algebra: false, calculo: false, fisica: false };
     const subjectPaneRegistry = {};
     let activeObserver = null;
     const SUBJECT_SCROLL_STORAGE_KEY = 'subjectScrollPositions';
@@ -7530,7 +7543,7 @@
         if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise) return;
         window.MathJax.startup.promise.then(() => {
             Object.keys(SUBJECTS).forEach(subject => {
-                const pane = document.querySelector('.subject-pane[data-subject="' + subject + '"]');
+                const pane = subjectPaneRegistry[subject] || document.querySelector('.subject-pane[data-subject="' + subject + '"]');
                 if (pane && pane.querySelector('mjx-container')) {
                     mathTypesetDoneBySubject[subject] = true;
                 }
@@ -7538,16 +7551,49 @@
         }).catch(() => {});
     }
 
-    function ensureSubjectMathRendered(subject, pane) {
-        if (!pane || !window.MathJax || !window.MathJax.typesetPromise || mathTypesetDoneBySubject[subject]) return;
+    function paneHasRawMath(pane) {
+        if (!pane) return false;
+        const html = pane.innerHTML || '';
+        return /\\\[|\\\(|\$\$|\$(?:\\.|[^$\n])+\$/.test(html);
+    }
 
-        if (pane.querySelector('mjx-container')) {
+    function ensureSubjectMathRendered(subject, pane, force) {
+        if (!pane || !window.MathJax || !window.MathJax.typesetPromise) return;
+
+        const hasRawMath = paneHasRawMath(pane);
+        if (!hasRawMath) {
             mathTypesetDoneBySubject[subject] = true;
             return;
         }
 
-        // Instant mode: avoid full-pane MathJax processing during subject switch.
-        // Equations inside dynamically revealed blocks are still typeset on demand.
+        if (!force && mathTypesetDoneBySubject[subject] && pane.querySelector('mjx-container')) return;
+        if (mathTypesetInFlightBySubject[subject]) return;
+
+        mathTypesetInFlightBySubject[subject] = true;
+
+        const runTypeset = () => {
+            MathJax.typesetPromise([pane]).then(() => {
+                mathTypesetDoneBySubject[subject] = pane.querySelector('mjx-container') !== null;
+                restoreSubjectScroll(subject);
+                updateProgressBar();
+            }).catch(() => {}).finally(() => {
+                mathTypesetInFlightBySubject[subject] = false;
+            });
+        };
+
+        const startupReady = (window.MathJax.startup && window.MathJax.startup.promise)
+            ? window.MathJax.startup.promise
+            : Promise.resolve();
+
+        startupReady.then(() => {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(runTypeset, { timeout: 900 });
+            } else {
+                setTimeout(runTypeset, 0);
+            }
+        }).catch(() => {
+            mathTypesetInFlightBySubject[subject] = false;
+        });
     }
 
     function updateProgressBar() {
@@ -7970,7 +8016,19 @@
     window.addEventListener('beforeunload', () => {
         saveCurrentSubjectScroll();
     });
-    window.addEventListener('resize', syncResponsiveLayout);
+    window.addEventListener('resize', () => {
+        syncResponsiveLayout();
+        const pane = getActivePane();
+        if (pane && activeSubject) ensureSubjectMathRendered(activeSubject, pane, false);
+    });
+
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            syncResponsiveLayout();
+            const pane = getActivePane();
+            if (pane && activeSubject) ensureSubjectMathRendered(activeSubject, pane, true);
+        }, 30);
+    });
 
     (function init() {
         const savedTheme = localStorage.getItem('currentTheme') || 'light';
