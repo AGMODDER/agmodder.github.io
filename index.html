@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumo Geral - Hub Unificado (Algebra Linear 2, Calculo 2 e Fisica 1)</title>
     <script>
+        (() => {
+            let theme = null;
+            try {
+                theme = localStorage.getItem('themePreferenceV1') || localStorage.getItem('currentTheme');
+            } catch (e) {
+                theme = null;
+            }
+
+            if (theme !== 'dark' && theme !== 'light') {
+                theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            }
+
+            const root = document.documentElement;
+            root.classList.add('theme-booting');
+            root.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <script>
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -53,14 +71,18 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+            background: #020617;
+        }
+
+        html.theme-booting body {
+            transition: none !important;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
-            background:
-                radial-gradient(circle at 14% 6%, rgba(59, 130, 246, 0.18), transparent 28%),
-                radial-gradient(circle at 88% 12%, rgba(30, 64, 175, 0.16), transparent 26%),
-                linear-gradient(160deg, #0a1228 0%, #0f1f44 42%, #162a57 100%);
+            background: #020617;
             color: var(--text-primary);
             line-height: 1.7;
             transition: var(--transition);
@@ -68,8 +90,16 @@
             overflow-x: hidden;
         }
 
-        [data-theme="light"] body,
-        body:not([data-theme="dark"]) {
+        html[data-theme="dark"] body,
+        body[data-theme="dark"] {
+            background:
+                radial-gradient(circle at 14% 6%, rgba(59, 130, 246, 0.18), transparent 28%),
+                radial-gradient(circle at 88% 12%, rgba(30, 64, 175, 0.16), transparent 26%),
+                linear-gradient(160deg, #0a1228 0%, #0f1f44 42%, #162a57 100%);
+        }
+
+        html[data-theme="light"] body,
+        body[data-theme="light"] {
             background: var(--bg-primary);
         }
 
@@ -97,7 +127,7 @@
             align-items: center;
             justify-content: center;
             padding: 24px;
-            background: rgba(3, 8, 22, 0.62);
+            background: rgba(2, 6, 23, 0.88);
             backdrop-filter: blur(10px) saturate(120%);
             -webkit-backdrop-filter: blur(10px) saturate(120%);
             opacity: 0;
@@ -107,7 +137,7 @@
         }
 
         [data-theme="dark"] .app-loading-overlay {
-            background: rgba(3, 8, 22, 0.62);
+            background: rgba(2, 6, 23, 0.9);
         }
 
         .app-loading-overlay.is-visible {
@@ -6917,11 +6947,8 @@
 
     function setTheme(theme, persistUserPreference) {
         const normalized = theme === 'dark' ? 'dark' : 'light';
-        if (normalized === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-        } else {
-            document.body.removeAttribute('data-theme');
-        }
+        document.documentElement.setAttribute('data-theme', normalized);
+        document.body.setAttribute('data-theme', normalized);
 
         if (persistUserPreference) {
             safeStorageSet(THEME_PREFERENCE_STORAGE_KEY, normalized);
@@ -7921,6 +7948,11 @@
         const savedTheme = getStoredThemePreference();
         const initialTheme = savedTheme || detectSystemTheme();
         setTheme(initialTheme, false);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.documentElement.classList.remove('theme-booting');
+            });
+        });
         bindSystemThemeListener();
         markMathAsReadyWhenStartupFinishes();
         registerSubjectPanes();
