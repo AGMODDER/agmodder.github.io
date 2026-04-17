@@ -5005,6 +5005,33 @@
             </div>
 
             <div class="definition">
+                <p><strong>Estrutura de Conhecimento e Elementos da Física</strong></p>
+                <ul>
+                    <li><strong>Fato:</strong> Acontecimento real, independente do observador.</li>
+                    <li><strong>Fenômeno:</strong> Fato percebido/observado. "Todo fenômeno está associado a um fato".</li>
+                    <li><strong>Informação:</strong> A descrição do fenômeno.</li>
+                </ul>
+                <p>Para construir a teoria física a partir disso, utilizamos uma base lógica composta por:</p>
+                <ul>
+                    <li><strong>Conceitos:</strong> Ideia mental e subjetiva abstrata; a representação lógica concisa do fenômeno.</li>
+                    <li><strong>Proposições:</strong> Afirmações estruturadas que necessitam de uma demonstração.</li>
+                    <li><strong>Teoremas:</strong> Proposições muito relevantes validadas dentro da teoria.</li>
+                    <li><strong>Corolários:</strong> Casos e deduções particulares diretas de um Teorema ou Proposição prévia.</li>
+                    <li><strong>Hipóteses:</strong> Suposições provisórias a serem rigorosamente testadas (ex: <em>"Assumindo falta de impulso, a velocidade inicial da pedra é 0"</em>).</li>
+                    <li><strong>Tese:</strong> Validação sistemática final da proposição em estudo.</li>
+                </ul>
+            </div>
+
+            <div class="definition">
+                <p><strong>Corpo Extenso, Partícula e Manutenção de Referencial</strong></p>
+                <p>Para o estudo da cinemática vetorial na universidade, faz-se necessário definir parâmetros base:</p>
+                <ul>
+                    <li><strong>Referencial:</strong> Qualquer ponto fixo que serve para delimitar grandezas físicas (movimento ou repouso). A física clássica utiliza sempre <strong>Referenciais Inerciais</strong> (aqueles onde são perfeitamente válidas as Leis de Newton, ou seja, referenciais sem aceleração própria).</li>
+                    <li><strong>Corpo vs. Partícula:</strong> Um corpo é considerado um ponto material ou uma "partícula" exclusivamente quando suas dimensões corporais podem ser desprezáveis em relação à vastidão geométrica do movimento que realiza.</li>
+                </ul>
+            </div>
+
+            <div class="definition">
                 <p><strong>Métodos de Raciocínio</strong></p>
                 <ul>
                     <li><strong>Dedutivo:</strong> Parte de uma "Lei Geral" e chega a um caso particular. É a base das equações matemáticas exatas. Exemplo: Se a lei geral dos gases é $PV = nRT$, aplico-a a um balão específico para achar seu volume.</li>
@@ -5166,6 +5193,20 @@
                 <div>
                     <h2>Lançamentos Oblíquos e a Equação da Parábola</h2>
                     <div class="subtitle">Independência de movimentos e dedução do modelo de projéteis</div>
+                </div>
+            </div>
+
+            <div class="theorem">
+                <p><strong>Duração e Trajetória no Lançamento Horizontal Estrito</strong></p>
+                <p>Considere o lançamento de uma esfera da ponta de uma mesa perfeitamente plana localizada em uma altura $h$. Na iminência de abandonar a mesa, o seu vetor velocidade possui apenas componente em "X", ou seja $V_{0y} = 0 \text{ e } V_{0x} = V_0$.</p>
+                <p>Avaliando isoladamente as componentes ao longo dos eixos, temos:</p>
+                <ul>
+                    <li>(Eixo X, velocidade constante): $x(t) = v_{0x} \cdot t \implies t = \frac{x}{V_0}$</li>
+                    <li>(Eixo Y, queda variável): $\frac{dv_y}{dt} = -g \implies \int dv_y = - \int g dt \implies V_y = -gt$. Integrando a posição $\implies y(t) = y_0 - \frac{g}{2}t^2$</li>
+                </ul>
+                <p>Substituindo equações isoladas de Galileu (tempo $t$ em Y sendo amarrado ao tempo $t$ exigido em X), e estabelecendo o solo como o ponto onde o movimento cessa ($y=0$), a física descobre a <strong>Equação Cartesiana Exata da Geometria do Lançamento Horizontal</strong>:</p>
+                <div class="math-display">
+                    \[ 0 = h - \frac{g}{2}\left(\frac{x}{V_0}\right)^2 \implies h = \frac{g}{2}\left(\frac{x}{V_0}\right)^2 \]
                 </div>
             </div>
 
