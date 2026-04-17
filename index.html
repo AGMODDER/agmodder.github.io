@@ -3600,6 +3600,24 @@
 
         #hub-selection {
             z-index: 10060 !important;
+            height: 100dvh;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+
+        @media (max-width: 1024px) {
+            #hub-selection {
+                align-items: flex-start !important;
+                justify-content: center !important;
+                padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
+            }
+
+            .hub-shell {
+                width: 100% !important;
+            }
         }
 
         .subject-pane { display: none; }
