@@ -6487,6 +6487,10 @@
     const LOADING_FADE_OUT_MS = 300;
     const LOADING_PROGRESS_MAX_WHILE_BUSY = 96;
     const LOADING_COMPLETE_HOLD_MS = 160;
+    const LOADING_START_PROGRESS = 18;
+    const LOADING_PROGRESS_MIN_ON_RESUME = 28;
+    const LOADING_FINAL_RAMP_MIN_MS = 520;
+    const LOADING_BAR_DEFAULT_TRANSITION = 'transform 120ms linear';
     let scrollSaveTimer = null;
     let scrollTicking = false;
     let loadingPendingCount = 0;
@@ -6577,6 +6581,14 @@
         };
     }
 
+    function setLoadingBarTransition(durationMs, easing) {
+        const parts = getLoadingOverlayParts();
+        const bar = parts.bar;
+        if (!bar) return;
+        const duration = Math.max(0, Math.floor(Number(durationMs) || 0));
+        bar.style.transition = 'transform ' + duration + 'ms ' + (easing || 'linear');
+    }
+
     function setLoadingProgress(nextValue, immediate) {
         const parts = getLoadingOverlayParts();
         const bar = parts.bar;
@@ -6590,7 +6602,7 @@
             bar.style.transition = 'none';
             bar.style.transform = 'scaleX(' + scaleValue + ')';
             bar.offsetHeight;
-            bar.style.transition = 'transform 120ms linear';
+            bar.style.transition = LOADING_BAR_DEFAULT_TRANSITION;
         } else {
             bar.style.transform = 'scaleX(' + scaleValue + ')';
         }
@@ -6666,11 +6678,12 @@
         }
 
         document.body.classList.add('app-loading');
+        setLoadingBarTransition(120, 'linear');
 
         if (wasIdle) {
-            setLoadingProgress(6, true);
-        } else if (loadingProgressValue < 12) {
-            setLoadingProgress(12);
+            setLoadingProgress(LOADING_START_PROGRESS, true);
+        } else if (loadingProgressValue < LOADING_PROGRESS_MIN_ON_RESUME) {
+            setLoadingProgress(LOADING_PROGRESS_MIN_ON_RESUME);
         }
 
         startLoadingProgressTicker();
@@ -6681,7 +6694,6 @@
         if (loadingPendingCount > 0) return;
 
         stopLoadingProgressTicker();
-        setLoadingProgress(100);
 
         const parts = getLoadingOverlayParts();
         const overlay = parts.overlay;
@@ -6692,7 +6704,18 @@
         }
 
         const elapsed = Date.now() - loadingVisibleSince;
-        const wait = Math.max(LOADING_COMPLETE_HOLD_MS, LOADING_MIN_VISIBLE_MS - elapsed);
+        const remainingToMin = Math.max(0, LOADING_MIN_VISIBLE_MS - elapsed);
+        const finalRampDuration = Math.max(LOADING_FINAL_RAMP_MIN_MS, remainingToMin + 260);
+        const rampFrom = Math.max(loadingProgressValue, 62);
+
+        setLoadingBarTransition(Math.max(280, finalRampDuration - 40), 'cubic-bezier(0.22, 1, 0.36, 1)');
+        setLoadingProgress(rampFrom);
+
+        requestAnimationFrame(() => {
+            setLoadingProgress(100);
+        });
+
+        const wait = finalRampDuration + LOADING_COMPLETE_HOLD_MS;
 
         if (loadingHideTimer) clearTimeout(loadingHideTimer);
         if (loadingFadeTimer) clearTimeout(loadingFadeTimer);
@@ -6704,6 +6727,7 @@
                 overlay.classList.remove('is-visible', 'is-hiding');
                 document.body.classList.remove('app-loading');
                 loadingVisibleSince = 0;
+                setLoadingBarTransition(120, 'linear');
                 setLoadingProgress(0, true);
             }, LOADING_FADE_OUT_MS);
         }, wait);
